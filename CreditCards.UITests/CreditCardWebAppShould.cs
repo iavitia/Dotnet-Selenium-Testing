@@ -25,32 +25,23 @@ namespace CreditCards.UITests
         {
             using (IWebDriver driver = new ChromeDriver())
             {
-                driver.Navigate().GoToUrl(HomeUrl);
+                var homePage = new HomePage(driver);
+                homePage.NavigateTo();
 
                 // Managing controlling window size and position
                 driver.Manage().Window.Maximize();
-                DemoHelper.Pause();
 
                 driver.Manage().Window.Minimize();
-                DemoHelper.Pause();
 
                 driver.Manage().Window.Size = new System.Drawing.Size(300, 400);
-                DemoHelper.Pause();
 
                 driver.Manage().Window.Position = new System.Drawing.Point(1, 1);
-                DemoHelper.Pause();
 
                 driver.Manage().Window.Position = new System.Drawing.Point(50, 50);
-                DemoHelper.Pause();
 
                 driver.Manage().Window.Position = new System.Drawing.Point(100, 100);
-                DemoHelper.Pause();
 
                 driver.Manage().Window.FullScreen();
-                DemoHelper.Pause();
-
-                Assert.Equal(HomeTitle, driver.Title);
-                Assert.Equal(HomeUrl, driver.Url);
             }
         }
 
@@ -60,13 +51,11 @@ namespace CreditCards.UITests
         {
             using (IWebDriver driver = new ChromeDriver())
             {
-
-                driver.Navigate().GoToUrl(HomeUrl);
-                DemoHelper.Pause();
+                var homePage = new HomePage(driver);
+                homePage.NavigateTo();
 
                 driver.Navigate().Refresh();
-                Assert.Equal(HomeTitle, driver.Title);
-                Assert.Equal(HomeUrl, driver.Url);
+                homePage.EnsurePageLoaded();
             }
         }
         [Fact]
@@ -75,18 +64,18 @@ namespace CreditCards.UITests
         {
             using (IWebDriver driver = new ChromeDriver())
             {
-                driver.Navigate().GoToUrl(HomeUrl);
-                IWebElement generationTokenElement =
-                    driver.FindElement(By.Id("GenerationToken"));
-                string initialToken = generationTokenElement.Text;
+                var homePage = new HomePage(driver);
+                homePage.NavigateTo();
+
+                
+                string initialToken = homePage.GenerationToken;
+
                 driver.Navigate().GoToUrl(AboutUrl);
                 driver.Navigate().Back();
-                DemoHelper.Pause();
 
-                Assert.Equal(HomeTitle, driver.Title);
-                Assert.Equal(HomeUrl, driver.Url);
+                homePage.EnsurePageLoaded();
 
-                string reloadedToken = driver.FindElement(By.Id("GenerationToken")).Text;
+                string reloadedToken = homePage.GenerationToken;
                 Assert.NotEqual(initialToken, reloadedToken);
             }
         }
@@ -96,17 +85,11 @@ namespace CreditCards.UITests
         {
             using (IWebDriver driver = new ChromeDriver())
             {
-                driver.Navigate().GoToUrl(AboutUrl);
-                DemoHelper.Pause();
-
-                driver.Navigate().GoToUrl(HomeUrl);
-                DemoHelper.Pause();
+                var homePage = new HomePage(driver);
+                homePage.NavigateTo();
 
                 driver.Navigate().Back();
-                DemoHelper.Pause();
-
                 driver.Navigate().Forward();
-                DemoHelper.Pause();
 
                 Assert.Equal(HomeTitle, driver.Title);
                 Assert.Equal(HomeUrl, driver.Url);
@@ -118,11 +101,8 @@ namespace CreditCards.UITests
         {
             using (IWebDriver driver = new ChromeDriver())
             {
-                driver.Navigate().GoToUrl(HomeUrl);
                 var homePage = new HomePage(driver);
-
-                DemoHelper.Pause();
-
+                homePage.NavigateTo();
 
                 Assert.Equal("Easy Credit Card", homePage.Products[0].name);
                 Assert.Equal("20% APR", homePage.Products[0].interestRate);
@@ -132,8 +112,6 @@ namespace CreditCards.UITests
 
                 Assert.Equal("Gold Credit Card", homePage.Products[2].name);
                 Assert.Equal("17% APR", homePage.Products[2].interestRate);
-
-                DemoHelper.Pause();
             }
         }
         [Fact]
@@ -141,12 +119,11 @@ namespace CreditCards.UITests
         {
             using (IWebDriver driver = new ChromeDriver())
             {
-                driver.Navigate().GoToUrl(HomeUrl);
-                DemoHelper.Pause();
+                var homePage = new HomePage(driver);
+                homePage.NavigateTo();
 
                 IWebElement randomGreetingApplyLink = driver.FindElement(By.PartialLinkText("- Apply Now!"));
                 randomGreetingApplyLink.Click();
-                DemoHelper.Pause();
 
                 Assert.Equal("Credit Card Application - Credit Cards", driver.Title);
                 Assert.Equal(ApplyUrl, driver.Url);
@@ -157,13 +134,12 @@ namespace CreditCards.UITests
         {
             using (IWebDriver driver = new ChromeDriver())
             {
-                driver.Navigate().GoToUrl(HomeUrl);
-                DemoHelper.Pause();
+                var homePage = new HomePage(driver);
+                homePage.NavigateTo();
 
                 // Relative xpath for partial text
                 IWebElement randomGreetingApplyLink = driver.FindElement(By.XPath("//a[text()[contains(.,'- Apply Now!')]]"));
                 randomGreetingApplyLink.Click();
-                DemoHelper.Pause();
 
                 Assert.Equal("Credit Card Application - Credit Cards", driver.Title);
                 Assert.Equal(ApplyUrl, driver.Url);
@@ -174,10 +150,10 @@ namespace CreditCards.UITests
         {
             using (IWebDriver driver = new ChromeDriver())
             {
-                driver.Navigate().GoToUrl(HomeUrl);
-                DemoHelper.Pause();
+                var homePage = new HomePage(driver);
+                homePage.NavigateTo();
 
-                driver.FindElement(By.Id("ContactFooter")).Click();
+                homePage.ClickContactFooterLink();
 
                 // Contact opens in new tab. Switching tabs before making assertions
                 ReadOnlyCollection<string> allTabs = driver.WindowHandles;
@@ -185,7 +161,6 @@ namespace CreditCards.UITests
                 string contactTab = allTabs[1];
 
                 driver.SwitchTo().Window(contactTab);
-                DemoHelper.Pause();
 
                 Assert.Equal("Contact - Credit Cards", driver.Title);
                 Assert.EndsWith("/Home/Contact", driver.Url);
@@ -196,9 +171,10 @@ namespace CreditCards.UITests
         {
             using (IWebDriver driver = new ChromeDriver())
             {
-                driver.Navigate().GoToUrl(HomeUrl);
+                var homePage = new HomePage(driver);
+                homePage.NavigateTo();
 
-                driver.FindElement(By.Id("LiveChat")).Click();
+                homePage.ClickLiveChatFooterLink();
 
                 // There is a 2 second settimeout in JS code.
                 // using explicit wait so we don't run test before alert is loaded
@@ -207,9 +183,27 @@ namespace CreditCards.UITests
                 IAlert alert = wait.Until(ExpectedConditions.AlertIsPresent());
 
                 Assert.EndsWith("Live chat is currently closed.", alert.Text);
-                DemoHelper.Pause();
                 alert.Accept();
-                DemoHelper.Pause();
+            }
+        }
+        [Fact]
+        public void NavigateToAboutUsWhenAcceptClicked()
+        {
+            using (IWebDriver driver = new ChromeDriver())
+            {
+                var homePage = new HomePage(driver);
+                homePage.NavigateTo();
+
+                homePage.ClickAboutUs();
+
+                // There is a 2 second settimeout in JS code.
+                // using explicit wait so we don't run test before alert is loaded
+                WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
+
+                IAlert alertBox = wait.Until(ExpectedConditions.AlertIsPresent());
+                alertBox.Accept();
+
+                Assert.EndsWith("/Home/About", driver.Url);
             }
         }
         [Fact]
@@ -217,9 +211,10 @@ namespace CreditCards.UITests
         {
             using (IWebDriver driver = new ChromeDriver())
             {
-                driver.Navigate().GoToUrl(HomeUrl);
+                var homePage = new HomePage(driver);
+                homePage.NavigateTo();
 
-                driver.FindElement(By.Id("LearnAboutUs")).Click();
+                homePage.ClickAboutUs();
 
                 // There is a 2 second settimeout in JS code.
                 // using explicit wait so we don't run test before alert is loaded
@@ -228,7 +223,7 @@ namespace CreditCards.UITests
                 IAlert alertBox = wait.Until(ExpectedConditions.AlertIsPresent());
                 alertBox.Dismiss();
 
-                Assert.Equal(HomeUrl, driver.Url);
+                homePage.EnsurePageLoaded();
             }
         }
         [Fact]
@@ -237,21 +232,18 @@ namespace CreditCards.UITests
             using (IWebDriver driver = new ChromeDriver())
             {
                 // using cookies
-                driver.Navigate().GoToUrl(HomeUrl);
-                driver.Manage().Cookies.AddCookie(new Cookie("acceptedCookies", "true"));
+                var homePage = new HomePage(driver);
+                homePage.NavigateTo();
 
+                driver.Manage().Cookies.AddCookie(new Cookie("acceptedCookies", "true"));
                 driver.Navigate().Refresh();
 
-                ReadOnlyCollection<IWebElement> message = driver.FindElements(By.Id("CookiesBeingUsed"));
-
-                Assert.Empty(message);
-
-                Cookie cookieValue = driver.Manage().Cookies.GetCookieNamed("acceptedCookies");
-                Assert.Equal("true", cookieValue.Value);
+                Assert.False(homePage.IsCookieMessagePresent);
 
                 driver.Manage().Cookies.DeleteCookieNamed("acceptedCookies");
                 driver.Navigate().Refresh();
-                Assert.NotNull(driver.FindElement(By.Id("CookiesBeingUsed")));
+
+                Assert.True(homePage.IsCookieMessagePresent);
             }
         }
         
